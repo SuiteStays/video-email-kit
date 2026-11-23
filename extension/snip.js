@@ -75,6 +75,8 @@ async function save(region) {
   c.width = Math.max(1, Math.round(r.w)); c.height = Math.max(1, Math.round(r.h));
   c.getContext("2d").drawImage(img, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
   const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+  // Straight onto the clipboard, so it can be pasted anywhere right away.
+  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); } catch (e) { /* the result page tries again */ }
   try {
     const title = "Screenshot " + new Date().toLocaleString();
     const made = await fetch(SERVER + "/api/videos", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },

@@ -63,11 +63,7 @@ export async function renderEditor(view, id, h) {
         <button class="btn primary" id="e-save">Save</button>
         <button class="btn primary" id="e-send">Save &amp; send &rarr;</button>
       </div></div>
-    ${fresh ? `<div class="card freshbar"><b>&#10004; Screenshot saved to your library.</b> What next?
-      <button class="btn" id="f-mark">&#9998; Mark it up</button>
-      <button class="btn" id="f-copy">&#128203; Copy picture</button>
-      <button class="btn" id="f-dl">&#11015; Save a copy on this computer</button>
-      <button class="btn primary" id="f-send">&#9993; Send it</button></div>` : ""}
+    ${fresh ? `<div class="card freshbar"><b>&#10004; Screenshot saved to your library.</b></div>` : ""}
     <div class="edtools card">
       <div class="row">${TOOLS.map(([k, ico, t]) => `<button class="tool" data-tool="${k}" title="${t}">${ico}</button>`).join("")}</div>
       <div class="row">
@@ -490,20 +486,78 @@ export async function renderEditor(view, id, h) {
     }
   }
 
-  // A green bar under the Save button: says it worked, where it went, and what you can do next.
-  function showSavedBar() {
+  // ---- automatic copies: the clipboard, and a folder on this computer chosen once ----
+  const prefDb = () => new Promise((res, rej) => {
+    const r = indexedDB.open("ssv-prefs", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const prefGet = async (k) => { try { const db = await prefDb(); return await new Promise((res) => { const q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); }); } catch (e) { return undefined; } };
+  const prefSet = async (k, val) => { const db = await prefDb(); return new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(val, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); };
+  const canPickFolder = !!window.showDirectoryPicker;
+  let copyName = null; // this picture's file name in the folder, so a later Save replaces it instead of adding another
+
+  async function writeToFolder(dir) {
+    if (!copyName) {
+      const d = new Date(), p2 = (n) => String(n).padStart(2, "0");
+      copyName = `${fileBase()} ${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}.${p2(d.getMinutes())}.${p2(d.getSeconds())}.png`;
+    }
+    const fh = await dir.getFileHandle(copyName, { create: true });
+    const w = await fh.createWritable(); await w.write(await toBlob(finalCanvas())); await w.close();
+  }
+
+  // Puts the picture on the clipboard and in the chosen folder. clicked = the
+  // person just pressed a button, which is when Chrome lets us ask for permission.
+  async function autoCopies(clicked) {
+    const out = { clip: false, folder: "none", dirName: "" };
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": await toBlob(finalCanvas()) })]);
+      out.clip = true;
+    } catch (e) { /* Chrome said no (page not in front) - the bar offers a Copy button instead */ }
+    if (!canPickFolder) { out.folder = "unsupported"; return out; }
+    const dir = await prefGet("folder");
+    if (!dir) return out;
+    out.dirName = dir.name; out.folder = "ask";
+    try {
+      let perm = await dir.queryPermission({ mode: "readwrite" });
+      if (perm !== "granted" && clicked) perm = await dir.requestPermission({ mode: "readwrite" });
+      if (perm === "granted") { await writeToFolder(dir); out.folder = "saved"; }
+    } catch (e) { out.folder = "ask"; out.error = e.message; }
+    return out;
+  }
+
+  async function chooseFolder() {
+    let dir;
+    try { dir = await window.showDirectoryPicker({ id: "ssv-shots", mode: "readwrite", startIn: "pictures" }); } catch (e) { return null; }
+    await prefSet("folder", dir);
+    return dir;
+  }
+
+  // A green bar under the Save button: says it worked, where everything went, and what you can do next.
+  function showSavedBar(head, r, isNew = false) {
     view.querySelectorAll(".freshbar").forEach((b) => b.remove());
     const bar = document.createElement("div");
     bar.className = "card freshbar";
-    const at = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    bar.innerHTML = `<b>&#10004; Saved to your library at ${at}.</b>
-      <a class="btn" href="#/">See it in your library</a>
-      <button class="btn" data-a="pc">&#11015; Save a copy on this computer</button>
-      <button class="btn" data-a="copy">&#128203; Copy picture</button>
-      <button class="btn primary" data-a="send">&#9993; Send it</button>`;
-    bar.querySelector('[data-a="pc"]').onclick = () => saveCopyToComputer().catch((e) => toast("Couldn't save the copy: " + e.message, 5000));
-    bar.querySelector('[data-a="copy"]').onclick = () => document.getElementById("e-copy").click();
-    bar.querySelector('[data-a="send"]').onclick = () => document.getElementById("e-send").click();
+    let where = "";
+    if (r.clip) where += `<span>&#10004; Copied to your clipboard - paste it anywhere.</span> `;
+    if (r.folder === "saved") where += `<span>&#10004; Copy saved in your &ldquo;${esc(r.dirName)}&rdquo; folder.</span>`;
+    bar.innerHTML = `<div style="flex-basis:100%"><b>&#10004; ${head}</b> ${where}</div>
+      ${r.clip ? "" : `<button class="btn" data-a="copy">&#128203; Copy picture</button>`}
+      ${r.folder === "ask" ? `<button class="btn primary" data-a="dir">&#11015; Save a copy in &ldquo;${esc(r.dirName)}&rdquo;</button>` : ""}
+      ${r.folder === "none" ? `<button class="btn primary" data-a="pick">&#128193; Choose a folder for automatic copies</button>` : ""}
+      ${isNew ? `<button class="btn" data-a="mark">&#9998; Mark it up</button>` : ""}
+      <button class="btn" data-a="send">&#9993; Send it</button>
+      <button class="btn" data-a="pc">Save somewhere else...</button>
+      ${r.folder === "saved" || r.folder === "ask" ? `<button class="btn" data-a="pick">Change folder</button>` : ""}
+      <a class="btn" href="#/">See it in your library</a>`;
+    const on = (a, fn) => bar.querySelectorAll(`[data-a="${a}"]`).forEach((b) => { b.onclick = fn; });
+    const again = async () => showSavedBar(head, await autoCopies(true), isNew);
+    on("pc", () => saveCopyToComputer().catch((e) => toast("Couldn't save the copy: " + e.message, 5000)));
+    on("copy", again);
+    on("dir", again);
+    on("pick", async () => { if (await chooseFolder()) { copyName = null; await again(); toast("From now on every screenshot is copied to that folder", 4500); } });
+    on("send", () => document.getElementById("e-send").click());
+    on("mark", () => { bar.remove(); tool = "arrow"; markTool(); toast("Pick a tool above and draw on the picture"); });
     view.firstElementChild.after(bar);
     bar.scrollIntoView({ block: "nearest" });
   }
@@ -513,7 +567,8 @@ export async function renderEditor(view, id, h) {
     if (!quiet && btn) { btn.disabled = true; btn.textContent = "Saving..."; }
     try { await saveNow(); } finally { if (!quiet && btn) { btn.disabled = false; btn.textContent = "Save"; } }
     if (!quiet) {
-      showSavedBar();
+      const at = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      showSavedBar(`Saved to your library at ${at}.`, await autoCopies(true));
       if (btn) { btn.innerHTML = "&#10004; Saved"; setTimeout(() => { if (document.body.contains(btn)) btn.textContent = "Save"; }, 3000); }
     }
   }
@@ -585,15 +640,6 @@ export async function renderEditor(view, id, h) {
   };
   window.addEventListener("beforeunload", (e) => { if (dirty && document.body.contains(main)) { e.preventDefault(); e.returnValue = ""; } });
 
-  // ------------------------------------------------ "what next?" bar on a brand-new screenshot
-  if (fresh) {
-    const bar = view.querySelector(".freshbar");
-    view.querySelector("#f-mark").onclick = () => { bar.remove(); tool = "arrow"; markTool(); toast("Pick a tool above and draw on the picture"); };
-    view.querySelector("#f-copy").onclick = () => document.getElementById("e-copy").click();
-    view.querySelector("#f-dl").onclick = () => saveCopyToComputer().catch((e) => toast("Couldn't save the copy: " + e.message, 5000));
-    view.querySelector("#f-send").onclick = () => document.getElementById("e-send").click();
-  }
-
   // ------------------------------------------------ start
   document.getElementById("prettyopts").hidden = !beautify.on;
   document.getElementById("e-pretty").classList.toggle("primary", beautify.on);
@@ -601,6 +647,8 @@ export async function renderEditor(view, id, h) {
   markTool(); sizeCanvases(); redraw();
   if (v.source_url) status("From " + v.source_url);
   // New capture with no preview picture yet: make one so emails and texts look right.
+  // Brand-new screenshot: put it on the clipboard and in the chosen folder straight away.
+  if (fresh) autoCopies(false).then((r) => showSavedBar("Screenshot saved to your library.", r, true)).catch(() => {});
   if (!v.has_thumb) save(true).then(() => status(v.source_url ? "From " + v.source_url : "")).catch(() => {});
   // Read the words in the picture once, quietly, so the library search finds them.
   if (!v.transcript && W0 * H0 < 25e6) setTimeout(() => readText().catch(() => {}), 1500);

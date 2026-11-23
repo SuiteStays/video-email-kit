@@ -11,6 +11,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     run(msg.mode, msg.tabId).catch((e) => notifyError(msg.tabId, e));
     reply({ ok: true });
   }
+  if (msg.type === "snip-shot") { showSnip(msg.shot).then(() => reply({ ok: true }), (e) => reply({ error: (e && e.message) || String(e) })); return true; }
   if (msg.type === "snip-get") { reply(snips.get(msg.id) || null); snips.delete(msg.id); }
   if (msg.type === "open-tab") { openInFront(msg.url).then(() => reply({ ok: true })); return true; }
 });
@@ -252,18 +253,18 @@ async function openInFront(url, nextTo) {
 const snips = new Map(); // frozen screen pictures waiting for the area picker
 
 async function snip(delaySeconds) {
-  // 1. Chrome's own picker: Entire screen (each monitor listed) or a Window.
-  const streamId = await new Promise((resolve) => chrome.desktopCapture.chooseDesktopMedia(["screen", "window"], resolve));
-  if (!streamId) return; // cancelled
-  // 2. Optional wait, to open a menu or pop-up first.
-  if (delaySeconds) await sleep(delaySeconds * 1000);
-  // 3. Freeze one picture of it (done in the hidden helper page).
-  await ensureOffscreen();
-  const shot = await chrome.runtime.sendMessage({ type: "offscreen-grab", streamId });
-  if (!shot || shot.error) throw new Error((shot && shot.error) || "Couldn't capture the screen");
+  // Chrome's own chooser (Entire screen, each monitor, or a Window) only opens
+  // when a real page asks for it, so a small helper window does the asking and
+  // sends the frozen picture back here as a "snip-shot" message.
+  await chrome.windows.create({ url: chrome.runtime.getURL("pick.html?delay=" + (delaySeconds || 0)),
+    type: "popup", width: 460, height: 190, focused: true });
+}
+
+async function showSnip(shot) {
+  if (!shot || !shot.dataUrl) throw new Error("Couldn't capture the screen");
   const id = String(Date.now());
   snips.set(id, shot);
-  // 4. Show it full screen on the monitor it came from, to drag out the area.
+  // Show it full screen on the monitor it came from, to drag out the area.
   const display = await matchDisplay(shot.width, shot.height);
   const url = chrome.runtime.getURL("snip.html?id=" + id);
   if (display) {
@@ -273,19 +274,6 @@ async function snip(delaySeconds) {
   } else {
     // A single window was picked: show it in a big window instead.
     await chrome.windows.create({ url, type: "popup", width: Math.min(1400, shot.width + 40), height: Math.min(950, shot.height + 80), focused: true });
-  }
-}
-
-async function ensureOffscreen() {
-  if (chrome.runtime.getContexts) {
-    const have = await chrome.runtime.getContexts({ contextTypes: ["OFFSCREEN_DOCUMENT"] });
-    if (have.length) return;
-  }
-  try {
-    await chrome.offscreen.createDocument({ url: "offscreen.html", reasons: ["USER_MEDIA", "DISPLAY_MEDIA"],
-      justification: "Take one still picture of the screen the user picked for a screenshot." });
-  } catch (e) {
-    if (!/single offscreen|already/i.test(e.message)) throw e;
   }
 }
 

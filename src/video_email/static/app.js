@@ -67,8 +67,8 @@ const routes = {
   login: renderLogin, invite: renderInvite, "": renderLibrary, record: renderRecord, video: renderVideo,
   activity: renderActivity, requests: renderRequests, team: renderTeam, settings: renderSettings, pick: renderPick,
   shared: renderShared, playlists: renderPlaylists, reports: renderReports,
-  edit: async (id, params) => (await import("./editor.js?v=11")).renderEditor(view, id, { api, esc, toast, modal, closeModal, copyText, params }),
-  capture: async () => (await import("./editor.js?v=11")).renderScreenGrab(view, { api, toast }),
+  edit: async (id, params) => (await import("./editor.js?v=12")).renderEditor(view, id, { api, esc, toast, modal, closeModal, copyText, params }),
+  capture: async () => (await import("./editor.js?v=12")).renderScreenGrab(view, { api, toast }),
 };
 
 // A video shared from the phone's gallery (Android): the service worker kept it; upload it now.
@@ -1428,7 +1428,7 @@ async function renderSettings() {
     </div>
     <div class="card"><h2>Chrome button (computer)</h2>
       <p class="muted" style="margin-top:0">Puts a __COMPANY__ Video button in Chrome's toolbar (record a video or take a screenshot of any page in one click) and a Video button inside Gmail's compose window.</p>
-      <a class="btn" href="/static/gmail-button.zip?v=8" download="video-button.zip">Download the Chrome button</a>
+      <a class="btn" href="/static/gmail-button.zip?v=9" download="video-button.zip">Download the Chrome button</a>
       <a class="btn" href="/static/gmail-button-help.html?v=8" target="_blank">How to install it</a>
     </div>
     <div class="card"><h2>Screenshots of programs outside Chrome (only if you need it)</h2>
