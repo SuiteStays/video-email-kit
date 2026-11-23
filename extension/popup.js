@@ -27,6 +27,7 @@ document.querySelectorAll("[data-shot]").forEach((b) => {
   const box = document.getElementById("siteToggle");
   document.getElementById("siteName").textContent = host;
   document.getElementById("siteRow").hidden = false;
+  document.getElementById("siteHead").hidden = false;
   box.checked = anyboxSites.includes(host);
   box.onchange = async () => {
     const cur = (await chrome.storage.local.get({ anyboxSites: [] })).anyboxSites.filter((h) => h !== host);

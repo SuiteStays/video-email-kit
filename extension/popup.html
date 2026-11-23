@@ -13,6 +13,7 @@
   .ico { width: 20px; text-align: center; }
   .site { display: flex; gap: 8px; align-items: center; margin: 12px 0 0; font-size: 13px; color: #5d6b7a; cursor: pointer; }
   .site b { color: #16202b; }
+  .site { align-items: flex-start; margin-top: 0; } .site small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.35; color: #8a96a3; }
 </style></head>
 <body>
   <h1>__COMPANY__ Video</h1>
@@ -26,7 +27,10 @@
   <button data-shot="area"><span class="ico">&#9986;</span>Select an area (any monitor)<span class="key">Alt+Shift+A</span></button>
   <button data-shot="area-delay"><span class="ico">&#9201;</span>Select an area in 3 seconds<span class="key">for menus</span></button>
   <button data-shot="page-area"><span class="ico">&#128196;</span>Area of this page only</button>
-  <label class="site" id="siteRow" hidden><input type="checkbox" id="siteToggle"> Video button in message boxes on <b id="siteName"></b></label>
+  <h2 id="siteHead" hidden>On this website</h2>
+  <label class="site" id="siteRow" hidden><input type="checkbox" id="siteToggle">
+    <span>Add a <b>Video</b> button to message boxes on <b id="siteName"></b>
+    <small>Tick this only on a site where you write messages to people. A small Video button then appears next to the box you type in, so you can drop in one of your videos. Leave it unticked everywhere else.</small></span></label>
   <div class="row" style="margin-top:10px">
     <button data-go="/app#/" data-tab="1">My library</button>
     <button data-go="/app#/activity" data-tab="1">Activity</button>
