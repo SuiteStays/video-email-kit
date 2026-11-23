@@ -67,8 +67,8 @@ const routes = {
   login: renderLogin, invite: renderInvite, "": renderLibrary, record: renderRecord, video: renderVideo,
   activity: renderActivity, requests: renderRequests, team: renderTeam, settings: renderSettings, pick: renderPick,
   shared: renderShared, playlists: renderPlaylists, reports: renderReports,
-  edit: async (id, params) => (await import("./editor.js?v=10")).renderEditor(view, id, { api, esc, toast, modal, closeModal, copyText, params }),
-  capture: async () => (await import("./editor.js?v=10")).renderScreenGrab(view, { api, toast }),
+  edit: async (id, params) => (await import("./editor.js?v=11")).renderEditor(view, id, { api, esc, toast, modal, closeModal, copyText, params }),
+  capture: async () => (await import("./editor.js?v=11")).renderScreenGrab(view, { api, toast }),
 };
 
 // A video shared from the phone's gallery (Android): the service worker kept it; upload it now.

@@ -63,10 +63,10 @@ export async function renderEditor(view, id, h) {
         <button class="btn primary" id="e-save">Save</button>
         <button class="btn primary" id="e-send">Save &amp; send &rarr;</button>
       </div></div>
-    ${fresh ? `<div class="card freshbar"><b>&#10004; Screenshot saved.</b> What next?
+    ${fresh ? `<div class="card freshbar"><b>&#10004; Screenshot saved to your library.</b> What next?
       <button class="btn" id="f-mark">&#9998; Mark it up</button>
       <button class="btn" id="f-copy">&#128203; Copy picture</button>
-      <button class="btn" id="f-dl">&#11015; Download</button>
+      <button class="btn" id="f-dl">&#11015; Save a copy on this computer</button>
       <button class="btn primary" id="f-send">&#9993; Send it</button></div>` : ""}
     <div class="edtools card">
       <div class="row">${TOOLS.map(([k, ico, t]) => `<button class="tool" data-tool="${k}" title="${t}">${ico}</button>`).join("")}</div>
@@ -474,7 +474,51 @@ export async function renderEditor(view, id, h) {
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
 
-  async function save() {
+  // Ask where on this computer to put a copy (Chrome and Edge); other browsers use Downloads.
+  async function saveCopyToComputer() {
+    const blob = await toBlob(finalCanvas());
+    if (window.showSaveFilePicker) {
+      let handle;
+      try {
+        handle = await window.showSaveFilePicker({ suggestedName: fileBase() + ".png", types: [{ description: "Picture", accept: { "image/png": [".png"] } }] });
+      } catch (e) { return; } // closed the box without choosing
+      const w = await handle.createWritable(); await w.write(blob); await w.close();
+      toast("Copy saved on this computer as " + handle.name, 4000);
+    } else {
+      download(blob, fileBase() + ".png");
+      toast("Copy saved in your Downloads folder", 4000);
+    }
+  }
+
+  // A green bar under the Save button: says it worked, where it went, and what you can do next.
+  function showSavedBar() {
+    view.querySelectorAll(".freshbar").forEach((b) => b.remove());
+    const bar = document.createElement("div");
+    bar.className = "card freshbar";
+    const at = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    bar.innerHTML = `<b>&#10004; Saved to your library at ${at}.</b>
+      <a class="btn" href="#/">See it in your library</a>
+      <button class="btn" data-a="pc">&#11015; Save a copy on this computer</button>
+      <button class="btn" data-a="copy">&#128203; Copy picture</button>
+      <button class="btn primary" data-a="send">&#9993; Send it</button>`;
+    bar.querySelector('[data-a="pc"]').onclick = () => saveCopyToComputer().catch((e) => toast("Couldn't save the copy: " + e.message, 5000));
+    bar.querySelector('[data-a="copy"]').onclick = () => document.getElementById("e-copy").click();
+    bar.querySelector('[data-a="send"]').onclick = () => document.getElementById("e-send").click();
+    view.firstElementChild.after(bar);
+    bar.scrollIntoView({ block: "nearest" });
+  }
+
+  async function save(quiet = false) {
+    const btn = document.getElementById("e-save");
+    if (!quiet && btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+    try { await saveNow(); } finally { if (!quiet && btn) { btn.disabled = false; btn.textContent = "Save"; } }
+    if (!quiet) {
+      showSavedBar();
+      if (btn) { btn.innerHTML = "&#10004; Saved"; setTimeout(() => { if (document.body.contains(btn)) btn.textContent = "Save"; }, 3000); }
+    }
+  }
+
+  async function saveNow() {
     status("Saving...");
     const c = finalCanvas();
     const blob = await toBlob(c);
@@ -489,11 +533,12 @@ export async function renderEditor(view, id, h) {
     t.width = tw; t.height = Math.min(Math.round(c.height * tw / c.width), Math.round(tw * 0.75));
     t.getContext("2d").drawImage(c, 0, 0, c.width, t.height * c.width / tw, 0, 0, tw, t.height);
     await fetch(`/api/videos/${id}/thumb`, { method: "PUT", credentials: "same-origin", body: await toBlob(t, "image/jpeg", 0.85) });
-    dirty = false; status("Saved."); toast("Saved");
+    dirty = false; status("Saved to your library.");
   }
-  document.getElementById("e-save").onclick = () => save().catch((e) => status("Save failed: " + e.message));
+  const saveFailed = (e) => { status("Save failed: " + e.message); toast("NOT saved: " + e.message + ". Please try again.", 6000); };
+  document.getElementById("e-save").onclick = () => save().catch(saveFailed);
   document.getElementById("e-send").onclick = async () => {
-    try { if (dirty || !v.has_thumb) await save(); location.hash = "#/video/" + id; } catch (e) { status("Save failed: " + e.message); }
+    try { if (dirty || !v.has_thumb) await save(true); location.hash = "#/video/" + id; } catch (e) { saveFailed(e); }
   };
   document.getElementById("e-copy").onclick = async () => {
     try {
@@ -545,7 +590,7 @@ export async function renderEditor(view, id, h) {
     const bar = view.querySelector(".freshbar");
     view.querySelector("#f-mark").onclick = () => { bar.remove(); tool = "arrow"; markTool(); toast("Pick a tool above and draw on the picture"); };
     view.querySelector("#f-copy").onclick = () => document.getElementById("e-copy").click();
-    view.querySelector("#f-dl").onclick = () => { const s = document.getElementById("e-dl"); s.value = "png"; s.dispatchEvent(new Event("change")); };
+    view.querySelector("#f-dl").onclick = () => saveCopyToComputer().catch((e) => toast("Couldn't save the copy: " + e.message, 5000));
     view.querySelector("#f-send").onclick = () => document.getElementById("e-send").click();
   }
 
@@ -556,7 +601,7 @@ export async function renderEditor(view, id, h) {
   markTool(); sizeCanvases(); redraw();
   if (v.source_url) status("From " + v.source_url);
   // New capture with no preview picture yet: make one so emails and texts look right.
-  if (!v.has_thumb) save().then(() => status(v.source_url ? "From " + v.source_url : "")).catch(() => {});
+  if (!v.has_thumb) save(true).then(() => status(v.source_url ? "From " + v.source_url : "")).catch(() => {});
   // Read the words in the picture once, quietly, so the library search finds them.
   if (!v.transcript && W0 * H0 < 25e6) setTimeout(() => readText().catch(() => {}), 1500);
 }
