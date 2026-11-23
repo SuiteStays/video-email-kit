@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "__COMPANY__ Video",
+  "description": "Record videos and take screenshots (whole page, visible part or an area) for __COMPANY__, and add videos inside Gmail.",
+  "version": "1.5.0",
+  "icons": { "48": "icon-48.png", "128": "icon-128.png" },
+  "permissions": ["activeTab", "scripting", "desktopCapture", "offscreen", "system.display", "storage", "alarms"],
+  "host_permissions": ["__SERVER__/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "__COMPANY__ Video",
+    "default_popup": "popup.html",
+    "default_icon": { "48": "icon-48.png", "128": "icon-128.png" }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+V" },
+      "description": "Open __COMPANY__ Video"
+    },
+    "capture-full": {
+      "suggested_key": { "default": "Alt+Shift+P" },
+      "description": "Screenshot the whole page"
+    },
+    "capture-area": {
+      "suggested_key": { "default": "Alt+Shift+A" },
+      "description": "Screenshot an area of any monitor or window"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*/*", "http://*/*"],
+      "exclude_matches": ["https://mail.google.com/*", "__SERVER__/*"],
+      "js": ["anybox.js"],
+      "css": ["anybox.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

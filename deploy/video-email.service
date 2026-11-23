@@ -1,0 +1,18 @@
+# systemd *user* unit -- runs the program all the time and restarts it if it stops.
+# Assumes the code is in ~/video-email. Install with:
+#   mkdir -p ~/.config/systemd/user && cp deploy/video-email.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now video-email
+#   sudo loginctl enable-linger $USER      (keeps it running after you log out)
+
+[Unit]
+Description=Video email (record, send, open/watch alerts)
+
+[Service]
+WorkingDirectory=%h/video-email
+Environment=VIDEO_EMAIL_HOME=%h/video-email
+ExecStart=%h/video-email/.venv/bin/uvicorn video_email.app:create_app --factory --host 127.0.0.1 --port 8772 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

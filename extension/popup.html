@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body { width: 270px; margin: 0; padding: 14px; font: 14px/1.4 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #16202b; }
+  h1 { font-size: 15px; margin: 0 0 10px; color: #0f5c8c; }
+  h2 { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #5d6b7a; margin: 12px 0 6px; }
+  button { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 6px; padding: 10px 12px; border: 1px solid #e3e8ee;
+    border-radius: 10px; background: #fff; font: 600 14px/1 inherit; cursor: pointer; text-align: left; color: #16202b; }
+  button:hover { border-color: #0f5c8c; background: #e8f1f7; }
+  button.rec { background: #d92d20; border-color: #d92d20; color: #fff; }
+  button .key { margin-left: auto; font-weight: 400; color: #8a96a3; font-size: 12px; }
+  .row { display: flex; gap: 8px; } .row button { justify-content: center; font-weight: 500; }
+  .ico { width: 20px; text-align: center; }
+  .site { display: flex; gap: 8px; align-items: center; margin: 12px 0 0; font-size: 13px; color: #5d6b7a; cursor: pointer; }
+  .site b { color: #16202b; }
+</style></head>
+<body>
+  <h1>__COMPANY__ Video</h1>
+  <h2>Record a video</h2>
+  <button class="rec" data-go="/app#/record?mode=camera"><span class="ico">&#127909;</span>Camera</button>
+  <button data-go="/app#/record?mode=screen"><span class="ico">&#128421;</span>Screen</button>
+  <button data-go="/app#/record?mode=both"><span class="ico">&#128100;</span>Screen + camera</button>
+  <h2>Screenshot</h2>
+  <button data-shot="full"><span class="ico">&#128220;</span>Whole page<span class="key">Alt+Shift+P</span></button>
+  <button data-shot="visible"><span class="ico">&#128444;</span>Visible part</button>
+  <button data-shot="area"><span class="ico">&#9986;</span>Select an area (any monitor)<span class="key">Alt+Shift+A</span></button>
+  <button data-shot="area-delay"><span class="ico">&#9201;</span>Select an area in 3 seconds<span class="key">for menus</span></button>
+  <button data-shot="page-area"><span class="ico">&#128196;</span>Area of this page only</button>
+  <label class="site" id="siteRow" hidden><input type="checkbox" id="siteToggle"> Video button in message boxes on <b id="siteName"></b></label>
+  <div class="row" style="margin-top:10px">
+    <button data-go="/app#/" data-tab="1">My library</button>
+    <button data-go="/app#/activity" data-tab="1">Activity</button>
+  </div>
+  <script src="popup.js"></script>
+</body></html>

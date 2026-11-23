@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f5c8c">
+<title>__COMPANY__ Video</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="stylesheet" href="/static/app.css?v=9">
+</head>
+<body>
+<header class="top" id="top" hidden>
+  <a class="logo" href="#/">__COMPANY__ <span>Video</span></a>
+  <nav id="nav">
+    <a href="#/" data-nav="library">Library</a>
+    <a href="#/activity" data-nav="activity">Activity</a>
+    <a href="#/playlists" data-nav="playlists">Playlists</a>
+    <a href="#/reports" data-nav="reports">Reports</a>
+    <a href="#/requests" data-nav="requests">Ask for a video</a>
+    <a href="#/team" data-nav="team" class="admin-only">Team</a>
+    <a href="#/settings" data-nav="settings">Settings</a>
+  </nav>
+  <a class="btn rec" href="#/record">&#9679; Record</a>
+</header>
+<main id="view" class="view"></main>
+<div id="toast" class="toast" hidden></div>
+<div id="modal" class="modal" hidden><div class="modal-card" id="modal-card"></div></div>
+<script src="/static/common.js?v=4"></script>
+<script type="module" src="/static/app.js?v=18"></script>
+</body>
+</html>

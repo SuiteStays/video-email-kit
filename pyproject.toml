@@ -1,0 +1,32 @@
+[project]
+name = "video-email"
+version = "0.1.0"
+description = "Video email: record, send, and know when it was opened and watched"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "python-multipart>=0.0.9",
+    "pywebpush>=2.0",
+    "segno>=1.6",
+    "pillow>=10.0",
+    "tzdata>=2024.1",  # time zones on computers without them (Windows)
+    "av>=12.0",  # re-packs recordings so they start instantly (no re-encoding)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "httpx>=0.27"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+video_email = ["static/*"]

@@ -1,0 +1,7 @@
+.ssv-anybox { position: absolute; z-index: 2147483646; display: flex; gap: 2px; align-items: center; }
+.ssv-anybox button { border: 0; cursor: pointer; font: 600 12px/1 Arial, sans-serif; }
+.ssv-anybox .ssv-go { display: flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 13px;
+  background: #0f5c8c; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.ssv-anybox .ssv-go:hover { background: #0a4569; }
+.ssv-anybox .ssv-go span { width: 8px; height: 8px; border-radius: 50%; background: #ff5a4f; }
+.ssv-anybox .ssv-x { width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; padding: 0; }

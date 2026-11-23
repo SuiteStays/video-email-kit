@@ -1,0 +1,8 @@
+data/
+.venv/
+.env
+__pycache__/
+*.egg-info/
+.pytest_cache/
+# Built by deploy/package_extension.py with YOUR web address inside - never commit it.
+src/video_email/static/gmail-button.zip

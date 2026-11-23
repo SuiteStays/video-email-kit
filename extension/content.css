@@ -1,0 +1,7 @@
+.ss-video-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; margin-left: 10px; padding: 0 14px;
+  border: 0; border-radius: 18px; background: #0f5c8c; color: #fff; font: 600 14px/1 "Google Sans", Roboto, Arial, sans-serif;
+  cursor: pointer; vertical-align: middle; white-space: nowrap;
+}
+.ss-video-btn:hover { background: #0a4569; }
+.ss-video-btn .ss-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff5a4f; }
