@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__COMPANY__ Video",
   "description": "Record videos and take screenshots (whole page, visible part or an area) for __COMPANY__, and add videos inside Gmail.",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "icons": { "48": "icon-48.png", "128": "icon-128.png" },
   "permissions": ["activeTab", "scripting", "desktopCapture", "system.display", "clipboardWrite", "storage", "alarms"],
   "host_permissions": ["__SERVER__/*"],

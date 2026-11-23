@@ -256,8 +256,20 @@ async function snip(delaySeconds) {
   // Chrome's own chooser (Entire screen, each monitor, or a Window) only opens
   // when a real page asks for it, so a small helper window does the asking and
   // sends the frozen picture back here as a "snip-shot" message.
-  await chrome.windows.create({ url: chrome.runtime.getURL("pick.html?delay=" + (delaySeconds || 0)),
-    type: "popup", width: 460, height: 190, focused: true });
+  // Chrome draws its chooser INSIDE this window, so the window has to be big
+  // enough to hold it (a small one cuts the chooser's buttons off). Centre it
+  // on the Chrome window the person is using.
+  const W = 1100, H = 820;
+  const opts = { url: chrome.runtime.getURL("pick.html?delay=" + (delaySeconds || 0)), type: "popup", width: W, height: H, focused: true };
+  try {
+    const cur = await chrome.windows.getLastFocused();
+    if (cur && cur.width && cur.state !== "minimized") {
+      opts.left = Math.round(cur.left + (cur.width - W) / 2);
+      opts.top = Math.max(0, Math.round(cur.top + (cur.height - H) / 2));
+    }
+  } catch (e) { /* let Chrome place it */ }
+  try { await chrome.windows.create(opts); }
+  catch (e) { delete opts.left; delete opts.top; await chrome.windows.create(opts); } // position was off-screen
 }
 
 async function showSnip(shot) {

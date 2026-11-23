@@ -1428,7 +1428,7 @@ async function renderSettings() {
     </div>
     <div class="card"><h2>Chrome button (computer)</h2>
       <p class="muted" style="margin-top:0">Puts a __COMPANY__ Video button in Chrome's toolbar (record a video or take a screenshot of any page in one click) and a Video button inside Gmail's compose window.</p>
-      <a class="btn" href="/static/gmail-button.zip?v=9" download="video-button.zip">Download the Chrome button</a>
+      <a class="btn" href="/static/gmail-button.zip?v=10" download="video-button.zip">Download the Chrome button</a>
       <a class="btn" href="/static/gmail-button-help.html?v=8" target="_blank">How to install it</a>
     </div>
     <div class="card"><h2>Screenshots of programs outside Chrome (only if you need it)</h2>
